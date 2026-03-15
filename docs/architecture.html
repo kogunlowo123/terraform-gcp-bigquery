@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture - terraform-gcp-bigquery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0c0b;color:#f5f2eb;font-family:'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;line-height:1.6;padding:0}
+a{color:#c8420a;text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+.badge-bar{background:#111;border-bottom:2px solid #c8420a;padding:0.75rem 2rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.badge-bar img{height:28px}
+.badge-bar span{font-size:0.85rem;color:#aaa}
+h1{font-size:2rem;color:#c8420a;margin:1.5rem 0 0.5rem;border-bottom:1px solid #222;padding-bottom:0.5rem}
+h2{font-size:1.4rem;color:#c8420a;margin:2rem 0 1rem;border-bottom:1px solid #1a1a1a;padding-bottom:0.4rem}
+h3{font-size:1.1rem;color:#e8e0d4;margin:1.2rem 0 0.6rem}
+p,li{font-size:0.95rem;color:#ccc}
+ul{padding-left:1.5rem;margin:0.5rem 0}
+li{margin:0.3rem 0}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1rem 0}
+.card{background:#141514;border:1px solid #222;border-radius:8px;padding:1.2rem;transition:border-color 0.2s}.card:hover{border-color:#c8420a}
+.card h3{margin:0 0 0.5rem;font-size:1rem;color:#c8420a}
+.card p{font-size:0.85rem;color:#aaa;margin:0}
+.arch-diagram{background:#111;border:1px solid #222;border-radius:8px;padding:2rem;margin:1.5rem 0;overflow-x:auto}
+.flow{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:0.5rem}
+.flow-box{background:#1a1b1a;border:2px solid #333;border-radius:6px;padding:0.8rem 1.2rem;text-align:center;font-size:0.85rem;min-width:130px}
+.flow-box.accent{border-color:#c8420a;color:#c8420a;font-weight:bold}
+.flow-box.green{border-color:#34a853;color:#34a853}
+.flow-box.blue{border-color:#4285f4;color:#4285f4}
+.flow-box.purple{border-color:#9c27b0;color:#9c27b0}
+.flow-box.yellow{border-color:#fbbc04;color:#fbbc04}
+.flow-arrow{color:#555;font-size:1.5rem;display:flex;align-items:center;padding:0 0.2rem}
+.flow-col{display:flex;flex-direction:column;gap:0.5rem;align-items:center}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.85rem}
+th{background:#1a1b1a;color:#c8420a;padding:0.6rem 0.8rem;text-align:left;border:1px solid #222}
+td{padding:0.6rem 0.8rem;border:1px solid #222;color:#ccc}
+tr:nth-child(even){background:#111}
+code{background:#1a1b1a;padding:0.15rem 0.4rem;border-radius:3px;font-size:0.85rem;color:#e8e0d4}
+pre{background:#111;border:1px solid #222;border-radius:6px;padding:1rem;overflow-x:auto;margin:1rem 0}
+pre code{background:none;padding:0}
+.checklist{list-style:none;padding-left:0}
+.checklist li{padding:0.4rem 0;padding-left:1.8rem;position:relative}
+.checklist li::before{content:'[ ]';position:absolute;left:0;color:#c8420a;font-weight:bold}
+.section{margin:2rem 0}
+.footer{border-top:1px solid #222;margin-top:3rem;padding-top:1rem;text-align:center;font-size:0.8rem;color:#555}
+.exec-summary{background:#141514;border-left:4px solid #c8420a;padding:1.2rem 1.5rem;margin:1rem 0;border-radius:0 6px 6px 0}
+.exec-summary p{color:#ccc;font-size:0.95rem}
+</style>
+</head>
+<body>
+<div class="badge-bar">
+<img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=flat&logo=googlecloud&logoColor=white" alt="GCP">
+<img src="https://img.shields.io/badge/Terraform-7B42BC?style=flat&logo=terraform&logoColor=white" alt="Terraform">
+<span>terraform-gcp-bigquery</span>
+<span style="margin-left:auto;color:#555">Architecture Document</span>
+</div>
+<div class="container">
+
+<h1>BigQuery Module</h1>
+
+<div class="section">
+<h2>Executive Summary</h2>
+<div class="exec-summary">
+<p>A comprehensive Terraform module for managing Google BigQuery analytics infrastructure. Provisions datasets with native tables (time/range partitioned, clustered), standard and materialized views, external tables (GCS, Google Sheets, CSV, Parquet), SQL/JavaScript routines (UDFs, stored procedures), row-level security policies, and Data Transfer Service configurations. Supports CMEK encryption, authorized views, and fine-grained access control for enterprise data warehousing.</p>
+</div>
+</div>
+
+<div class="section">
+<h2>Overview</h2>
+<div class="card-grid">
+<div class="card"><h3>Provider</h3><p>google / google-beta >= 5.0</p></div>
+<div class="card"><h3>Terraform</h3><p>>= 1.3</p></div>
+<div class="card"><h3>Resources</h3><p>6 (Dataset, Tables, Views, Mat. Views, External Tables, Routines, Transfers, RLS)</p></div>
+<div class="card"><h3>Partitioning</h3><p>Time (DAY/HOUR/MONTH/YEAR) + Range</p></div>
+<div class="card"><h3>Table Types</h3><p>Native, Views, Materialized Views, External</p></div>
+<div class="card"><h3>Encryption</h3><p>Dataset-level + per-table CMEK</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Architecture Diagram</h2>
+<div class="arch-diagram">
+<div class="flow">
+<div class="flow-col">
+<div class="flow-box accent">Terraform Module</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box green">BigQuery Dataset</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box blue">Native Tables</div>
+<div class="flow-box blue">Views</div>
+<div class="flow-box blue">Materialized Views</div>
+<div class="flow-box blue">External Tables</div>
+<div class="flow-box blue">Routines (UDFs)</div>
+</div>
+</div>
+<br>
+<div class="flow">
+<div class="flow-col">
+<div class="flow-box green">Dataset</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box yellow">Access Control</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box">IAM Roles</div>
+<div class="flow-box">Authorized Views</div>
+<div class="flow-box">Row-Level Security</div>
+</div>
+</div>
+<br>
+<div class="flow">
+<div class="flow-col">
+<div class="flow-box blue">Native Tables</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box purple">Time Partitioning</div>
+<div class="flow-box purple">Range Partitioning</div>
+<div class="flow-box purple">Clustering</div>
+<div class="flow-box purple">CMEK Encryption</div>
+</div>
+</div>
+<br>
+<div class="flow">
+<div class="flow-col">
+<div class="flow-box blue">External Tables</div>
+</div>
+<div class="flow-arrow">&#9654;</div>
+<div class="flow-col">
+<div class="flow-box yellow">GCS (CSV/JSON/Avro/Parquet)</div>
+<div class="flow-box yellow">Google Sheets</div>
+</div>
+<div class="flow-arrow" style="margin-left:2rem">|</div>
+<div class="flow-col">
+<div class="flow-box purple">Data Transfer Service</div>
+<div class="flow-box purple">Scheduled Queries</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Component Breakdown</h2>
+<h3>google_bigquery_dataset.this</h3>
+<p>Core dataset resource with configurable location, table/partition expiration, time travel (48-168 hours), CMEK encryption, and dynamic access control entries including authorized views.</p>
+<h3>google_bigquery_table.tables</h3>
+<p>Native tables with JSON schema definitions, time partitioning (DAY/HOUR/MONTH/YEAR), range partitioning, up to 4 clustering columns, per-table CMEK encryption, and deletion protection.</p>
+<h3>google_bigquery_table.views / materialized_views</h3>
+<p>Standard SQL views and auto-refreshing materialized views with configurable refresh intervals (minimum 60s) and clustering support.</p>
+<h3>google_bigquery_table.external_tables</h3>
+<p>External tables reading from GCS or Google Sheets with format-specific options (CSV quoting, delimiters, skip rows).</p>
+<h3>google_bigquery_routine.routines</h3>
+<p>UDFs (scalar, table-valued) and stored procedures in SQL or JavaScript with typed arguments.</p>
+<h3>google_bigquery_data_transfer_config.transfers</h3>
+<p>Data Transfer Service configurations for scheduled queries, GCS imports, and third-party data sources.</p>
+</div>
+
+<div class="section">
+<h2>Data Flow</h2>
+<ul>
+<li><strong>Ingestion:</strong> Data lands in GCS or Google Sheets, then is queried via external tables or loaded via Data Transfer Service.</li>
+<li><strong>Processing:</strong> SQL routines and scheduled queries transform raw data into curated tables.</li>
+<li><strong>Serving:</strong> Views and materialized views provide optimized read access to downstream applications.</li>
+<li><strong>Security:</strong> Row-level security filters data per-user; authorized views provide cross-dataset access without exposing underlying tables.</li>
+<li><strong>Cost Optimization:</strong> Partitioning and clustering reduce query scan volume; table expiration automates data lifecycle.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Security Controls</h2>
+<table>
+<tr><th>Control</th><th>Implementation</th></tr>
+<tr><td>Encryption at Rest</td><td>Dataset-level CMEK via <code>default_encryption_configuration</code>; per-table CMEK override</td></tr>
+<tr><td>Access Control</td><td>Dataset ACLs (READER/WRITER/OWNER) by user, group, special group, or domain</td></tr>
+<tr><td>Authorized Views</td><td>Cross-dataset view access without granting table-level permissions</td></tr>
+<tr><td>Row-Level Security</td><td>Filter predicates granting row subsets to specific members</td></tr>
+<tr><td>Deletion Protection</td><td>Per-table <code>deletion_protection</code> (default: true) prevents accidental drops</td></tr>
+<tr><td>Time Travel</td><td>Configurable 2-7 day window for querying historical data states</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Industry Adaptation</h2>
+<ul>
+<li><strong>Financial Services:</strong> Partitioned transaction tables with CMEK and row-level security for PII. Scheduled queries for daily risk reports.</li>
+<li><strong>Healthcare:</strong> External tables on de-identified GCS data; authorized views for cross-department analytics; strict ACLs.</li>
+<li><strong>Retail / E-Commerce:</strong> Event tables partitioned by day, clustered by user_id and event_type for fast funnel analysis. Materialized views for dashboards.</li>
+<li><strong>Media / AdTech:</strong> High-volume ingestion via Data Transfer Service; JavaScript UDFs for custom attribution models.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Production Readiness Checklist</h2>
+<ul class="checklist">
+<li>Enable CMEK encryption at dataset and table level</li>
+<li>Set <code>deletion_protection = true</code> on production tables</li>
+<li>Configure time partitioning on large tables to reduce query costs</li>
+<li>Add clustering on high-cardinality filter columns (up to 4)</li>
+<li>Set appropriate <code>default_table_expiration_ms</code> for transient datasets</li>
+<li>Configure row-level security for multi-tenant data</li>
+<li>Avoid <code>delete_contents_on_destroy = true</code> in production</li>
+<li>Set <code>max_time_travel_hours = 168</code> (7 days) for production datasets</li>
+<li>Use authorized views instead of granting direct table access cross-dataset</li>
+<li>Apply consistent labels for cost allocation and resource tracking</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Configuration Reference</h2>
+<h3>Required Variables</h3>
+<table>
+<tr><th>Name</th><th>Type</th><th>Description</th></tr>
+<tr><td><code>project_id</code></td><td>string</td><td>GCP project ID</td></tr>
+<tr><td><code>dataset_id</code></td><td>string</td><td>Dataset ID (alphanumeric + underscores, max 1024 chars)</td></tr>
+</table>
+<h3>Key Optional Variables</h3>
+<table>
+<tr><th>Name</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>location</code></td><td>string</td><td>US</td><td>Dataset geographic location</td></tr>
+<tr><td><code>tables</code></td><td>map(object)</td><td>{}</td><td>Native table definitions</td></tr>
+<tr><td><code>views</code></td><td>map(object)</td><td>{}</td><td>View definitions</td></tr>
+<tr><td><code>materialized_views</code></td><td>map(object)</td><td>{}</td><td>Materialized view definitions</td></tr>
+<tr><td><code>external_tables</code></td><td>map(object)</td><td>{}</td><td>External table definitions</td></tr>
+<tr><td><code>routines</code></td><td>map(object)</td><td>{}</td><td>UDFs and stored procedures</td></tr>
+<tr><td><code>data_transfer_configs</code></td><td>map(object)</td><td>{}</td><td>Data Transfer Service configs</td></tr>
+</table>
+<h3>Outputs</h3>
+<table>
+<tr><th>Name</th><th>Description</th></tr>
+<tr><td><code>dataset_id</code></td><td>The dataset ID</td></tr>
+<tr><td><code>dataset_self_link</code></td><td>Dataset URI</td></tr>
+<tr><td><code>table_ids</code></td><td>Map of table IDs to self links</td></tr>
+<tr><td><code>view_ids</code></td><td>Map of view IDs to self links</td></tr>
+<tr><td><code>materialized_view_ids</code></td><td>Map of materialized view IDs to self links</td></tr>
+<tr><td><code>routine_ids</code></td><td>Map of routine IDs</td></tr>
+<tr><td><code>transfer_config_names</code></td><td>Map of transfer config names</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Deployment</h2>
+<pre><code>module "bigquery" {
+  source = "github.com/kogunlowo123/terraform-gcp-bigquery"
+
+  project_id  = "my-project"
+  dataset_id  = "analytics"
+  location    = "US"
+  description = "Production analytics dataset"
+
+  default_encryption_configuration = "projects/my-project/locations/us/keyRings/ring/cryptoKeys/key"
+
+  tables = {
+    events = {
+      schema = file("schemas/events.json")
+      time_partitioning = {
+        type  = "DAY"
+        field = "event_timestamp"
+      }
+      clustering = ["user_id", "event_type"]
+    }
+  }
+
+  views = {
+    daily_summary = {
+      query = "SELECT DATE(event_timestamp) d, COUNT(*) c FROM \`my-project.analytics.events\` GROUP BY 1"
+    }
+  }
+
+  labels = { team = "data", env = "production" }
+}</code></pre>
+</div>
+
+<div class="section">
+<h2>Links</h2>
+<ul>
+<li><a href="https://cloud.google.com/bigquery/docs">BigQuery Documentation</a></li>
+<li><a href="https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/bigquery_dataset">Terraform google_bigquery_dataset</a></li>
+<li><a href="https://cloud.google.com/bigquery/docs/partitioned-tables">Partitioned Tables</a></li>
+<li><a href="../README.md">Module README</a></li>
+</ul>
+</div>
+
+<div class="footer">
+<p>terraform-gcp-bigquery &middot; Architecture Document &middot; Generated 2026-03-15</p>
+<p style="color:#333;margin-top:0.3rem">Built for Google Cloud Platform</p>
+</div>
+</div>
+</body>
+</html>
