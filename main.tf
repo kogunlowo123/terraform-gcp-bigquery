@@ -2,16 +2,16 @@
 # BigQuery Dataset
 ###############################################################################
 resource "google_bigquery_dataset" "this" {
-  project                     = var.project_id
-  dataset_id                  = var.dataset_id
-  friendly_name               = var.friendly_name
-  description                 = var.description
-  location                    = var.location
-  default_table_expiration_ms = var.default_table_expiration_ms
+  project                        = var.project_id
+  dataset_id                     = var.dataset_id
+  friendly_name                  = var.friendly_name
+  description                    = var.description
+  location                       = var.location
+  default_table_expiration_ms    = var.default_table_expiration_ms
   default_partition_expiration_ms = var.default_partition_expiration_ms
-  delete_contents_on_destroy  = var.delete_contents_on_destroy
-  max_time_travel_hours       = var.max_time_travel_hours
-  labels                      = local.merged_labels
+  delete_contents_on_destroy     = var.delete_contents_on_destroy
+  max_time_travel_hours          = var.max_time_travel_hours
+  labels                         = var.labels
 
   dynamic "default_encryption_configuration" {
     for_each = var.default_encryption_configuration != null ? [var.default_encryption_configuration] : []
@@ -21,7 +21,7 @@ resource "google_bigquery_dataset" "this" {
   }
 
   dynamic "access" {
-    for_each = local.access_entries
+    for_each = var.access
     content {
       role           = access.value.role
       user_by_email  = access.value.user_by_email
@@ -32,7 +32,7 @@ resource "google_bigquery_dataset" "this" {
   }
 
   dynamic "access" {
-    for_each = local.authorized_view_entries
+    for_each = var.authorized_views
     content {
       view {
         project_id = access.value.project_id
@@ -57,7 +57,7 @@ resource "google_bigquery_table" "tables" {
   schema              = each.value.schema
   clustering          = length(each.value.clustering) > 0 ? each.value.clustering : null
   expiration_time     = each.value.expiration_time
-  labels              = local.table_labels[each.key]
+  labels              = merge(var.labels, each.value.labels)
   deletion_protection = each.value.deletion_protection
 
   dynamic "time_partitioning" {
@@ -101,7 +101,7 @@ resource "google_bigquery_table" "views" {
   table_id      = each.key
   friendly_name = each.value.friendly_name
   description   = each.value.description
-  labels        = local.view_labels[each.key]
+  labels        = merge(var.labels, each.value.labels)
 
   deletion_protection = false
 
@@ -123,13 +123,13 @@ resource "google_bigquery_table" "materialized_views" {
   friendly_name = each.value.friendly_name
   description   = each.value.description
   clustering    = length(each.value.clustering) > 0 ? each.value.clustering : null
-  labels        = local.materialized_view_labels[each.key]
+  labels        = merge(var.labels, each.value.labels)
 
   deletion_protection = false
 
   materialized_view {
-    query              = each.value.query
-    enable_refresh     = each.value.enable_refresh
+    query               = each.value.query
+    enable_refresh      = each.value.enable_refresh
     refresh_interval_ms = each.value.refresh_interval_ms
   }
 }
@@ -146,7 +146,7 @@ resource "google_bigquery_table" "external_tables" {
   friendly_name = each.value.friendly_name
   description   = each.value.description
   schema        = each.value.schema
-  labels        = merge(local.default_labels, each.value.labels)
+  labels        = merge(var.labels, each.value.labels)
 
   deletion_protection = false
 

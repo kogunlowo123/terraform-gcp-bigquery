@@ -9,13 +9,13 @@ variable "project_id" {
 }
 
 variable "location" {
-  description = "The geographic location for the dataset. See https://cloud.google.com/bigquery/docs/locations."
+  description = "The geographic location for the dataset."
   type        = string
   default     = "US"
 }
 
 variable "dataset_id" {
-  description = "A unique ID for the dataset. Must be alphanumeric (plus underscores)."
+  description = "A unique ID for the dataset, must be alphanumeric (plus underscores)."
   type        = string
 
   validation {
@@ -37,7 +37,7 @@ variable "description" {
 }
 
 variable "default_table_expiration_ms" {
-  description = "Default lifetime (in milliseconds) for tables. Minimum value is 3600000 (one hour)."
+  description = "Default lifetime in milliseconds for tables (minimum 3600000)."
   type        = number
   default     = null
 
@@ -60,7 +60,7 @@ variable "delete_contents_on_destroy" {
 }
 
 variable "max_time_travel_hours" {
-  description = "Defines the time travel window in hours. Value can be from 48 to 168 hours (2 to 7 days)."
+  description = "Time travel window in hours, value can be from 48 to 168 (2 to 7 days)."
   type        = number
   default     = 168
 
@@ -71,7 +71,7 @@ variable "max_time_travel_hours" {
 }
 
 variable "labels" {
-  description = "Key-value labels to apply to the dataset."
+  description = "Key-value labels to apply to the dataset and its resources."
   type        = map(string)
   default     = {}
 }
@@ -83,31 +83,19 @@ variable "default_encryption_configuration" {
 }
 
 variable "access" {
-  description = <<-EOT
-    Access control list for the dataset. Each entry contains:
-    - role: READER, WRITER, or OWNER
-    - user_by_email: (Optional) Email of the user
-    - group_by_email: (Optional) Email of the group
-    - special_group: (Optional) Special group (projectReaders, projectWriters, projectOwners, allAuthenticatedUsers)
-    - domain: (Optional) Domain to grant access
-  EOT
+  description = "Access control list for the dataset with role, user_by_email, group_by_email, special_group, and domain."
   type = list(object({
-    role            = string
-    user_by_email   = optional(string)
-    group_by_email  = optional(string)
-    special_group   = optional(string)
-    domain          = optional(string)
+    role           = string
+    user_by_email  = optional(string)
+    group_by_email = optional(string)
+    special_group  = optional(string)
+    domain         = optional(string)
   }))
   default = []
 }
 
 variable "authorized_views" {
-  description = <<-EOT
-    List of authorized views that can access the dataset. Each entry contains:
-    - project_id: Project of the authorized view
-    - dataset_id: Dataset of the authorized view
-    - table_id: Table ID of the authorized view
-  EOT
+  description = "List of authorized views that can access the dataset."
   type = list(object({
     project_id = string
     dataset_id = string
@@ -117,18 +105,7 @@ variable "authorized_views" {
 }
 
 variable "tables" {
-  description = <<-EOT
-    Map of native BigQuery tables to create. Key is the table_id. Each table object contains:
-    - friendly_name: Display name
-    - description: Table description
-    - schema: JSON schema definition (string)
-    - time_partitioning: (Optional) Partitioning config with type (DAY, HOUR, MONTH, YEAR), field, expiration_ms, require_partition_filter
-    - range_partitioning: (Optional) Range partitioning config with field, range (start, end, interval)
-    - clustering: (Optional) List of clustering column names (up to 4)
-    - expiration_time: (Optional) Expiration time in epoch milliseconds
-    - labels: (Optional) Labels for the table
-    - deletion_protection: (Optional) Prevent table deletion
-  EOT
+  description = "Map of native BigQuery tables to create, keyed by table_id."
   type = map(object({
     friendly_name = optional(string, "")
     description   = optional(string, "")
@@ -159,60 +136,33 @@ variable "tables" {
 }
 
 variable "views" {
-  description = <<-EOT
-    Map of BigQuery views to create. Key is the table_id. Each view contains:
-    - friendly_name: Display name
-    - description: View description
-    - query: SQL query defining the view
-    - use_legacy_sql: Whether to use legacy SQL (default: false)
-    - labels: Labels for the view
-  EOT
+  description = "Map of BigQuery views to create, keyed by table_id."
   type = map(object({
-    friendly_name = optional(string, "")
-    description   = optional(string, "")
-    query         = string
+    friendly_name  = optional(string, "")
+    description    = optional(string, "")
+    query          = string
     use_legacy_sql = optional(bool, false)
-    labels        = optional(map(string), {})
+    labels         = optional(map(string), {})
   }))
   default = {}
 }
 
 variable "materialized_views" {
-  description = <<-EOT
-    Map of materialized views to create. Key is the table_id. Each contains:
-    - friendly_name: Display name
-    - description: Description
-    - query: SQL query for the materialized view
-    - enable_refresh: Whether to enable automatic refresh
-    - refresh_interval_ms: Refresh interval in milliseconds (minimum 60000)
-    - clustering: List of clustering columns
-    - labels: Labels
-  EOT
+  description = "Map of materialized views to create, keyed by table_id."
   type = map(object({
-    friendly_name      = optional(string, "")
-    description        = optional(string, "")
-    query              = string
-    enable_refresh     = optional(bool, true)
+    friendly_name       = optional(string, "")
+    description         = optional(string, "")
+    query               = string
+    enable_refresh      = optional(bool, true)
     refresh_interval_ms = optional(number, 1800000)
-    clustering         = optional(list(string), [])
-    labels             = optional(map(string), {})
+    clustering          = optional(list(string), [])
+    labels              = optional(map(string), {})
   }))
   default = {}
 }
 
 variable "external_tables" {
-  description = <<-EOT
-    Map of external tables to create. Key is the table_id. Each contains:
-    - friendly_name: Display name
-    - description: Description
-    - schema: JSON schema string
-    - source_format: CSV, NEWLINE_DELIMITED_JSON, AVRO, PARQUET, ORC, GOOGLE_SHEETS
-    - source_uris: List of URIs for the external data
-    - autodetect: Whether to auto-detect schema
-    - labels: Labels
-    - csv_options: (Optional) CSV-specific options
-    - google_sheets_options: (Optional) Google Sheets-specific options
-  EOT
+  description = "Map of external tables to create, keyed by table_id."
   type = map(object({
     friendly_name = optional(string, "")
     description   = optional(string, "")
@@ -222,12 +172,12 @@ variable "external_tables" {
     autodetect    = optional(bool, true)
     labels        = optional(map(string), {})
     csv_options = optional(object({
-      quote                 = optional(string, "\"")
-      allow_jagged_rows     = optional(bool, false)
-      allow_quoted_newlines  = optional(bool, false)
-      encoding              = optional(string, "UTF-8")
-      field_delimiter       = optional(string, ",")
-      skip_leading_rows     = optional(number, 0)
+      quote                  = optional(string, "\"")
+      allow_jagged_rows      = optional(bool, false)
+      allow_quoted_newlines   = optional(bool, false)
+      encoding               = optional(string, "UTF-8")
+      field_delimiter        = optional(string, ",")
+      skip_leading_rows      = optional(number, 0)
     }))
     google_sheets_options = optional(object({
       range             = optional(string)
@@ -238,15 +188,7 @@ variable "external_tables" {
 }
 
 variable "routines" {
-  description = <<-EOT
-    Map of BigQuery routines (UDFs or stored procedures) to create. Key is the routine_id. Each contains:
-    - routine_type: SCALAR_FUNCTION, TABLE_VALUED_FUNCTION, or PROCEDURE
-    - language: SQL or JAVASCRIPT
-    - definition_body: The SQL or JavaScript function body
-    - description: Description
-    - return_type: Return type (JSON string) for functions
-    - arguments: List of argument objects with name, data_type, mode (IN, OUT, INOUT)
-  EOT
+  description = "Map of BigQuery routines (UDFs or stored procedures) to create, keyed by routine_id."
   type = map(object({
     routine_type    = string
     language        = optional(string, "SQL")
@@ -263,12 +205,7 @@ variable "routines" {
 }
 
 variable "row_level_security_policies" {
-  description = <<-EOT
-    Map of row-level security policies. Key is a unique identifier. Each contains:
-    - table_id: The table to apply the policy to
-    - filter_predicate: SQL expression for row filtering
-    - grantees: List of members (user:, group:, serviceAccount:, domain:)
-  EOT
+  description = "Map of row-level security policies keyed by a unique identifier."
   type = map(object({
     table_id         = string
     filter_predicate = string
@@ -278,24 +215,15 @@ variable "row_level_security_policies" {
 }
 
 variable "data_transfer_configs" {
-  description = <<-EOT
-    Map of BigQuery Data Transfer Service configurations. Key is a unique identifier. Each contains:
-    - display_name: Display name
-    - data_source_id: Data source (e.g., scheduled_query, google_cloud_storage, etc.)
-    - schedule: Transfer schedule (cron-like format)
-    - destination_dataset_id: Target dataset ID
-    - params: Map of parameters specific to the data source
-    - disabled: Whether the transfer is disabled
-    - service_account_name: Service account email
-  EOT
+  description = "Map of BigQuery Data Transfer Service configurations keyed by a unique identifier."
   type = map(object({
-    display_name         = string
-    data_source_id       = string
-    schedule             = optional(string)
+    display_name           = string
+    data_source_id         = string
+    schedule               = optional(string)
     destination_dataset_id = optional(string)
-    params               = map(string)
-    disabled             = optional(bool, false)
-    service_account_name = optional(string)
+    params                 = map(string)
+    disabled               = optional(bool, false)
+    service_account_name   = optional(string)
   }))
   default = {}
 }
