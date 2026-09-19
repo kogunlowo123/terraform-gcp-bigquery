@@ -2,16 +2,16 @@
 # BigQuery Dataset
 ###############################################################################
 resource "google_bigquery_dataset" "this" {
-  project                        = var.project_id
-  dataset_id                     = var.dataset_id
-  friendly_name                  = var.friendly_name
-  description                    = var.description
-  location                       = var.location
-  default_table_expiration_ms    = var.default_table_expiration_ms
+  project                         = var.project_id
+  dataset_id                      = var.dataset_id
+  friendly_name                   = var.friendly_name
+  description                     = var.description
+  location                        = var.location
+  default_table_expiration_ms     = var.default_table_expiration_ms
   default_partition_expiration_ms = var.default_partition_expiration_ms
-  delete_contents_on_destroy     = var.delete_contents_on_destroy
-  max_time_travel_hours          = var.max_time_travel_hours
-  labels                         = var.labels
+  delete_contents_on_destroy      = var.delete_contents_on_destroy
+  max_time_travel_hours           = var.max_time_travel_hours
+  labels                          = var.labels
 
   dynamic "default_encryption_configuration" {
     for_each = var.default_encryption_configuration != null ? [var.default_encryption_configuration] : []

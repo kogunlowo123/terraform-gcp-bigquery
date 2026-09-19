@@ -34,11 +34,11 @@ module "bigquery" {
   friendly_name = "Complete Analytics Platform"
   description   = "Comprehensive analytics dataset with all resource types"
 
-  default_table_expiration_ms        = 15552000000 # 180 days
-  default_partition_expiration_ms    = 31104000000 # 360 days
-  max_time_travel_hours              = 168
-  delete_contents_on_destroy         = false
-  default_encryption_configuration   = var.kms_key_name
+  default_table_expiration_ms      = 15552000000 # 180 days
+  default_partition_expiration_ms  = 31104000000 # 360 days
+  max_time_travel_hours            = 168
+  delete_contents_on_destroy       = false
+  default_encryption_configuration = var.kms_key_name
 
   access = [
     {
@@ -182,7 +182,7 @@ module "bigquery" {
         FROM `${var.project_id}.analytics_complete.raw_events`
         GROUP BY event_date, event_type, country
       SQL
-      clustering = ["event_type"]
+      clustering          = ["event_type"]
     }
   }
 
@@ -200,8 +200,8 @@ module "bigquery" {
         { name = "created_at", type = "TIMESTAMP", mode = "NULLABLE" }
       ])
       csv_options = {
-        skip_leading_rows    = 1
-        field_delimiter      = ","
+        skip_leading_rows     = 1
+        field_delimiter       = ","
         allow_quoted_newlines = true
       }
     }
@@ -222,7 +222,7 @@ module "bigquery" {
           WHERE event_type = event_filter
         )
       SQL
-      return_type = "{\"typeKind\": \"FLOAT64\"}"
+      return_type     = "{\"typeKind\": \"FLOAT64\"}"
       arguments = [
         {
           name      = "event_filter"
@@ -257,12 +257,12 @@ module "bigquery" {
 
   data_transfer_configs = {
     daily_aggregation = {
-      display_name         = "Daily Aggregation Query"
-      data_source_id       = "scheduled_query"
-      schedule             = "every 24 hours"
+      display_name           = "Daily Aggregation Query"
+      data_source_id         = "scheduled_query"
+      schedule               = "every 24 hours"
       destination_dataset_id = "analytics_complete"
       params = {
-        query = "SELECT DATE(event_timestamp) as dt, event_type, COUNT(*) as cnt FROM `${var.project_id}.analytics_complete.raw_events` WHERE event_timestamp >= @run_time GROUP BY 1, 2"
+        query                           = "SELECT DATE(event_timestamp) as dt, event_type, COUNT(*) as cnt FROM `${var.project_id}.analytics_complete.raw_events` WHERE event_timestamp >= @run_time GROUP BY 1, 2"
         destination_table_name_template = "daily_aggregation_{run_date}"
         write_disposition               = "WRITE_TRUNCATE"
       }

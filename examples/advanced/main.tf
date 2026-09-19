@@ -23,7 +23,7 @@ module "bigquery" {
   friendly_name = "Advanced Analytics"
   description   = "Analytics dataset with partitioned tables, views, and access controls"
 
-  default_table_expiration_ms     = 7776000000 # 90 days
+  default_table_expiration_ms     = 7776000000  # 90 days
   default_partition_expiration_ms = 15552000000 # 180 days
   max_time_travel_hours           = 168
 

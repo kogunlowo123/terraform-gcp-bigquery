@@ -172,12 +172,12 @@ variable "external_tables" {
     autodetect    = optional(bool, true)
     labels        = optional(map(string), {})
     csv_options = optional(object({
-      quote                  = optional(string, "\"")
-      allow_jagged_rows      = optional(bool, false)
-      allow_quoted_newlines   = optional(bool, false)
-      encoding               = optional(string, "UTF-8")
-      field_delimiter        = optional(string, ",")
-      skip_leading_rows      = optional(number, 0)
+      quote                 = optional(string, "\"")
+      allow_jagged_rows     = optional(bool, false)
+      allow_quoted_newlines = optional(bool, false)
+      encoding              = optional(string, "UTF-8")
+      field_delimiter       = optional(string, ",")
+      skip_leading_rows     = optional(number, 0)
     }))
     google_sheets_options = optional(object({
       range             = optional(string)
