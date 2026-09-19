@@ -19,7 +19,7 @@ variable "dataset_id" {
   type        = string
 
   validation {
-    condition     = can(regex("^[a-zA-Z_][a-zA-Z0-9_]{0,1023}$", var.dataset_id))
+    condition     = can(regex("^[a-zA-Z_][a-zA-Z0-9_]*$", var.dataset_id)) && length(var.dataset_id) <= 1024
     error_message = "Dataset ID must start with a letter or underscore, contain only letters, numbers, and underscores, and be at most 1024 characters."
   }
 }
@@ -42,7 +42,7 @@ variable "default_table_expiration_ms" {
   default     = null
 
   validation {
-    condition     = var.default_table_expiration_ms == null || var.default_table_expiration_ms >= 3600000
+    condition     = var.default_table_expiration_ms == null ? true : var.default_table_expiration_ms >= 3600000
     error_message = "Default table expiration must be at least 3600000 ms (1 hour)."
   }
 }
